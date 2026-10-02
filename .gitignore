@@ -1,0 +1,17 @@
+# Python virtual environments
+.venv/
+.venv313/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Azurite local storage
+__blobstorage__/
+__queuestorage__/
+__tablestorage__/
+__azurite_db_*.json
+AzuriteConfig
+
+# macOS
+.DS_Store
