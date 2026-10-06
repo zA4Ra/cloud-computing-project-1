@@ -14,6 +14,12 @@ container_client = blob_service_client.get_container_client(
     container_name
 )
 
+try:
+    container_client.create_container()
+    print("Container created successfully: diet-data")
+except Exception:
+    print("Container already exists: diet-data")
+
 # Upload All_Diets.csv
 blob_client = blob_service_client.get_blob_client(
     container=container_name,
