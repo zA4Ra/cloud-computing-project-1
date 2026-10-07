@@ -1,0 +1,49 @@
+# Simulated deployment with Docker Compose
+# Start everything with: docker compose up --build
+#
+# analysis  -> Task 2: runs data_analysis.py, plots go to ./static
+# azurite   -> local Azure Blob Storage
+# uploader  -> uploads All_Diets.csv to Azurite
+# function  -> Task 3: runs lambda_function.py, results go to ./output/results.json
+
+x-azurite-settings: &azurite-settings
+  AZURE_STORAGE_CONNECTION_STRING: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;"
+  CONTAINER_NAME: diet-data
+  BLOB_NAME: All_Diets.csv
+
+services:
+  analysis:
+    build: .
+    image: diet-analysis:latest
+    volumes:
+      - ./static:/app/static
+
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite
+    command: azurite-blob --blobHost 0.0.0.0 --blobPort 10000 --skipApiVersionCheck
+    ports:
+      - "10000:10000"
+
+  uploader:
+    build:
+      context: .
+      dockerfile: Dockerfile.function
+    image: diet-function:latest
+    command: python upload_to_azurite.py /data/All_Diets.csv
+    environment: *azurite-settings
+    volumes:
+      - ./All_Diets.csv:/data/All_Diets.csv:ro
+    depends_on:
+      - azurite
+
+  function:
+    build:
+      context: .
+      dockerfile: Dockerfile.function
+    image: diet-function:latest
+    environment: *azurite-settings
+    volumes:
+      - ./output:/app/output
+    depends_on:
+      uploader:
+        condition: service_completed_successfully
