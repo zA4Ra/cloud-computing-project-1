@@ -34,3 +34,17 @@ jobs:
 
       - name: Verify Docker image
         run: docker image inspect diet-analysis
+      - name: Simulate container deployment
+        run: |
+          docker run --rm --entrypoint python diet-analysis -c "print('Container started successfully')"
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Push Docker image
+        run: |
+          docker tag diet-analysis ${{ secrets.DOCKERHUB_USERNAME }}/diet-analysis:latest
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/diet-analysis:latest
